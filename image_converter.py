@@ -4,7 +4,7 @@
 
 import argparse
 import os
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 def convert_image(input_path, output_format):
     """
@@ -46,24 +46,47 @@ def convert_image(input_path, output_format):
         print(f"Success! Converted '{input_path}' to '{output_path}'.")
 
     except FileNotFoundError:
-        # This case is handled by the initial check, but it's good practice to keep it.
-        print(f"Error: The file '{input_path}' was not found.")
+        print(f"Error: The input file '{input_path}' was not found.")
+    except UnidentifiedImageError:
+        print(f"Error: Could not identify image file '{input_path}'. It might be corrupt or an unsupported format.")
+    except OSError as e:
+        print(f"Error: Failed to save image to '{output_path}'. This might be due to an unsupported output format for the given image data, or a permissions issue. Details: {e}")
     except Exception as e:
-        # Catch any other potential errors during conversion (e.g., invalid format)
-        print(f"An error occurred during conversion: {e}")
+        print(f"An unexpected error occurred during conversion: {e}")
 
 def main():
     """
     The main function to handle command-line arguments.
     """
     parser = argparse.ArgumentParser(description="Convert image formats.")
-    parser.add_argument("input_path", help="Path to the input image file.")
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("input_path", nargs='?', help="Path to the input image file (for single file conversion).")
+    group.add_argument("-d", "--directory", help="Path to a directory containing image files to convert.")
+
     parser.add_argument("output_format", help="Desired output format (e.g., png, jpg, webp, ico, pdf).")
+    parser.add_argument("-r", "--recursive", action="store_true", help="Recursively search for images in subdirectories when using --directory.")
     
     args = parser.parse_args()
     
-    # Call the conversion function
-    convert_image(args.input_path, args.output_format.lower())
+    if args.input_path:
+        # Single file conversion
+        convert_image(args.input_path, args.output_format.lower())
+    elif args.directory:
+        # Directory conversion
+        if not os.path.isdir(args.directory):
+            print(f"Error: Directory '{args.directory}' not found.")
+            return
+
+        image_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.tiff', '.ico') # Add more as needed
+        
+        for root, _, files in os.walk(args.directory):
+            for file in files:
+                if file.lower().endswith(image_extensions):
+                    input_file_path = os.path.join(root, file)
+                    convert_image(input_file_path, args.output_format.lower())
+            if not args.recursive:
+                break # Only process the top-level directory if not recursive
 
 if __name__ == "__main__":
     main()

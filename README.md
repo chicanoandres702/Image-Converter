@@ -19,7 +19,9 @@ pip install Pillow
 
 ## Usage
 
-To use the image converter, run the `image_converter.py` script from your terminal, providing the input image path and the desired output format as arguments.
+To use the image converter, run the `image_converter.py` script from your terminal. You can either convert a single image file or multiple images within a directory.
+
+### Converting a Single Image
 
 ```bash
 python image_converter.py <input_image_path> <output_format>
@@ -27,28 +29,47 @@ python image_converter.py <input_image_path> <output_format>
 
 **Arguments:**
 
-*   `<input_image_path>`: The path to the image file you want to convert.
+*   `<input_image_path>`: The path to the single image file you want to convert.
 *   `<output_format>`: The desired format for the output image (e.g., `png`, `jpg`, `webp`, `ico`, `pdf`).
 
-### Examples
+**Example:**
 
-1.  **Convert a JPG image to PNG:**
+```bash
+python image_converter.py my_photo.jpg png
+```
 
-    ```bash
-    python image_converter.py my_photo.jpg png
-    ```
+### Converting Multiple Images in a Directory
 
-2.  **Convert a PNG image to ICO:**
+To convert all supported image files within a specified directory, use the `-d` or `--directory` option.
 
-    ```bash
-    python image_converter.py icon.png ico
-    ```
+```bash
+python image_converter.py -d <directory_path> <output_format>
+```
 
-3.  **Convert a TIFF image to PDF:**
+**Arguments:**
 
-    ```bash
-    python image_converter.py document.tiff pdf
-    ```
+*   `-d <directory_path>`, `--directory <directory_path>`: The path to the directory containing image files to convert.
+*   `<output_format>`: The desired format for the output images.
+
+**Example:**
+
+```bash
+python image_converter.py -d my_images png
+```
+
+#### Recursive Conversion
+
+To also convert images found in subdirectories, add the `-r` or `--recursive` flag:
+
+```bash
+python image_converter.py -d <directory_path> <output_format> -r
+```
+
+**Example:**
+
+```bash
+python image_converter.py -d my_images jpg -r
+```
 
 ## Supported Formats
 
