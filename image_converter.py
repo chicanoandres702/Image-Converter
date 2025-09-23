@@ -28,7 +28,20 @@ def convert_image(input_path, output_format):
         
         # Save the image in the new format. Pillow automatically handles the conversion.
         # It's important to use a lowercase extension for consistency.
-        image.save(output_path, format=output_format.upper())
+        
+        # Map common output formats to Pillow's expected format strings
+        pillow_formats = {
+            'jpg': 'JPEG',
+            'jpeg': 'JPEG',
+            'ico': 'ICO',
+            'pdf': 'PDF'
+        }
+        
+        # Get the Pillow-specific format, defaulting to the uppercase version of the input
+        # if no specific mapping is found.
+        pillow_format = pillow_formats.get(output_format, output_format.upper())
+        
+        image.save(output_path, format=pillow_format)
         
         print(f"Success! Converted '{input_path}' to '{output_path}'.")
 
@@ -47,7 +60,7 @@ def main():
     if len(sys.argv) < 3:
         print("Usage: python image_converter.py <input_image_path> <output_format>")
         print("Example: python image_converter.py my_photo.jpg png")
-        print("Supported formats depend on Pillow, but common ones include jpg, png, webp, bmp, gif.")
+        print("Supported formats depend on Pillow, but common ones include jpg, png, webp, bmp, gif, ico, pdf.")
         return
 
     # Get the input file path from the first argument
