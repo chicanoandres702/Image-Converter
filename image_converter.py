@@ -2,7 +2,7 @@
 # It requires the Pillow library, which can be installed with:
 # pip install Pillow
 
-import sys
+import argparse
 import os
 from PIL import Image
 
@@ -56,22 +56,14 @@ def main():
     """
     The main function to handle command-line arguments.
     """
-    # Check if the correct number of arguments were provided
-    if len(sys.argv) < 3:
-        print("Usage: python image_converter.py <input_image_path> <output_format>")
-        print("Example: python image_converter.py my_photo.jpg png")
-        print("Supported formats depend on Pillow, but common ones include jpg, png, webp, bmp, gif, ico, pdf.")
-        return
-
-    # Get the input file path from the first argument
-    input_file = sys.argv[1]
+    parser = argparse.ArgumentParser(description="Convert image formats.")
+    parser.add_argument("input_path", help="Path to the input image file.")
+    parser.add_argument("output_format", help="Desired output format (e.g., png, jpg, webp, ico, pdf).")
     
-    # Get the desired output format from the second argument
-    # Convert it to lowercase for standardization
-    output_format = sys.argv[2].lower()
-
+    args = parser.parse_args()
+    
     # Call the conversion function
-    convert_image(input_file, output_format)
+    convert_image(args.input_path, args.output_format.lower())
 
 if __name__ == "__main__":
     main()
