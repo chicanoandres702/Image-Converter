@@ -60,33 +60,31 @@ def main():
     """
     parser = argparse.ArgumentParser(description="Convert image formats.")
 
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("input_path", nargs='?', help="Path to the input image file (for single file conversion).")
-    group.add_argument("-d", "--directory", help="Path to a directory containing image files to convert.")
-
+    parser.add_argument("input_path", help="Path to the input image file or a directory containing images.")
     parser.add_argument("output_format", help="Desired output format (e.g., png, jpg, webp, ico, pdf).")
-    parser.add_argument("-r", "--recursive", action="store_true", help="Recursively search for images in subdirectories when using --directory.")
+    parser.add_argument("-r", "--recursive", action="store_true", help="Recursively search for images in subdirectories when input_path is a directory.")
     
     args = parser.parse_args()
     
-    if args.input_path:
-        # Single file conversion
-        convert_image(args.input_path, args.output_format.lower())
-    elif args.directory:
-        # Directory conversion
-        if not os.path.isdir(args.directory):
-            print(f"Error: Directory '{args.directory}' not found.")
-            return
+    input_path = args.input_path
+    output_format = args.output_format.lower()
 
+    if os.path.isdir(input_path):
+        # Directory conversion
         image_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.tiff', '.ico') # Add more as needed
         
-        for root, _, files in os.walk(args.directory):
+        for root, _, files in os.walk(input_path):
             for file in files:
                 if file.lower().endswith(image_extensions):
-                    input_file_path = os.path.join(root, file)
-                    convert_image(input_file_path, args.output_format.lower())
+                    current_input_file_path = os.path.join(root, file)
+                    convert_image(current_input_file_path, output_format)
             if not args.recursive:
                 break # Only process the top-level directory if not recursive
+    elif os.path.isfile(input_path):
+        # Single file conversion
+        convert_image(input_path, output_format)
+    else:
+        print(f"Error: The provided path '{input_path}' is neither a file nor a directory.")
 
 if __name__ == "__main__":
     main()
