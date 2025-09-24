@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['image_converter.py'],
+    ['main_converter.py'],
     pathex=[],
     binaries=[],
     datas=[],
@@ -29,8 +29,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
-    gui=True,
+    console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

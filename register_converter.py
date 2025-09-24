@@ -6,7 +6,7 @@ import argparse
 # Get the absolute path to the image_converter.py script
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DISTRIBUTION_PATH = os.path.join(SCRIPT_DIR, "dist")
-IMAGE_CONVERTER_PATH = os.path.join(DISTRIBUTION_PATH, "image_converter.exe")
+IMAGE_CONVERTER_PATH = os.path.join(SCRIPT_DIR, "image_converter.exe")
 # PYTHON_EXE is no longer needed as we are directly calling the .exe
 
 # Supported output formats for the context menu
