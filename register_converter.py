@@ -111,7 +111,7 @@ def main():
         main_menu_name = "Convert Image(s) To"
         
         # For individual image files
-        image_file_type = "SystemFileAssociations\image"
+        image_file_type = r"SystemFileAssociations\image"
         main_key_path_image = add_main_context_menu_entry_with_subcommands(image_file_type, main_menu_name)
         if main_key_path_image:
             for output_format in SUPPORTED_OUTPUT_FORMATS:
@@ -127,7 +127,7 @@ def main():
                 add_subcommand_entry(main_key_path_directory, output_format.upper(), command)
 
         # For directory background (when right-clicking in an empty space within a folder)
-        directory_background_file_type = "Directory\Background"
+        directory_background_file_type = r"Directory\Background"
         main_key_path_directory_bg = add_main_context_menu_entry_with_subcommands(directory_background_file_type, main_menu_name)
         if main_key_path_directory_bg:
             for output_format in SUPPORTED_OUTPUT_FORMATS:
@@ -140,7 +140,7 @@ def main():
         main_menu_name = "Convert Image(s) To"
 
         # Remove for individual image files
-        image_file_type = "SystemFileAssociations\image"
+        image_file_type = r"SystemFileAssociations\image"
         main_key_path_image = rf"Software\Classes\{image_file_type}\shell\{main_menu_name}"
         for output_format in SUPPORTED_OUTPUT_FORMATS:
             remove_subcommand_entry(main_key_path_image, output_format.upper())
@@ -166,7 +166,7 @@ def main():
             print(f"Error removing main '{main_menu_name}' menu for directories: {{e}}")
 
         # Remove for directory background
-        directory_background_file_type = "Directory\Background"
+        directory_background_file_type = r"Directory\Background"
         main_key_path_directory_bg = rf"Software\Classes\{directory_background_file_type}\shell\{main_menu_name}"
         for output_format in SUPPORTED_OUTPUT_FORMATS:
             remove_subcommand_entry(main_key_path_directory_bg, output_format.upper())
