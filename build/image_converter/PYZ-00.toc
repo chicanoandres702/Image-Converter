@@ -1,4 +1,4 @@
-('f:\\chica\\Projects\\Image '
+('F:\\chica\\Projects\\Image '
  'Converter\\Image-Converter\\build\\image_converter\\PYZ-00.pyz',
  [('PIL',
    'C:\\Users\\chica\\AppData\\Roaming\\Python\\Python313\\site-packages\\PIL\\__init__.py',

@@ -5,8 +5,9 @@ import argparse
 
 # Get the absolute path to the image_converter.py script
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-IMAGE_CONVERTER_PATH = os.path.join(SCRIPT_DIR, "image_converter.py")
-PYTHON_EXE = sys.executable
+DISTRIBUTION_PATH = os.path.join(SCRIPT_DIR, "dist")
+IMAGE_CONVERTER_PATH = os.path.join(DISTRIBUTION_PATH, "image_converter.exe")
+# PYTHON_EXE is no longer needed as we are directly calling the .exe
 
 # Supported output formats for the context menu
 SUPPORTED_OUTPUT_FORMATS = ['bmp', 'gif', 'ico', 'jpeg', 'png', 'pdf', 'tiff', 'webp']
@@ -88,6 +89,24 @@ def remove_subcommand_entry(parent_key_path, submenu_name):
     except Exception as e:
         print(f"Error removing subcommand {submenu_name} - {e}")
 
+def delete_key_recursive(hkey, subkey):
+    try:
+        reg_key = winreg.OpenKey(hkey, subkey, 0, winreg.KEY_ALL_ACCESS)
+        while True:
+            try:
+                # Enumerate subkeys
+                sub = winreg.EnumKey(reg_key, 0)
+                delete_key_recursive(reg_key, sub)
+            except OSError:
+                # No more subkeys, break the loop
+                break
+        winreg.CloseKey(reg_key)
+        winreg.DeleteKey(hkey, subkey)
+    except FileNotFoundError:
+        pass # Key already deleted or never existed
+    except Exception as e:
+        print(f"Error deleting key recursively {subkey}: {e}")
+
 def is_admin():
     try:
         return os.getuid() == 0 # For Unix-like systems
@@ -95,7 +114,22 @@ def is_admin():
         import ctypes
         return ctypes.windll.shell32.IsUserAnAdmin() # For Windows
 
+def check_if_entries_exist():
+    main_menu_name = "Convert Image(s) To"
+    image_file_type = r"SystemFileAssociations\image"
+    key_path = rf"Software\\Classes\\{image_file_type}\shell\{main_menu_name}"
+    try:
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path)
+        winreg.CloseKey(key)
+        return True
+    except FileNotFoundError:
+        return False
+    except Exception as e:
+        print(f"Error checking for existing entries: {e}")
+        return False
+
 def main():
+
     if not is_admin():
         print("This script needs to be run with administrator privileges to modify the registry.")
         print("Please right-click on your terminal/command prompt and select 'Run as administrator'.")
@@ -106,7 +140,14 @@ def main():
     
     args = parser.parse_args()
 
-    if args.action == "add":
+    action_to_perform = args.action
+    if action_to_perform is None:
+        if check_if_entries_exist():
+            action_to_perform = "remove"
+        else:
+            action_to_perform = "add"
+
+    if action_to_perform == "add":
         # Add context menu for all image files (using SystemFileAssociations\image)
         main_menu_name = "Convert Image(s) To"
         
@@ -115,7 +156,7 @@ def main():
         main_key_path_image = add_main_context_menu_entry_with_subcommands(image_file_type, main_menu_name)
         if main_key_path_image:
             for output_format in SUPPORTED_OUTPUT_FORMATS:
-                command = f'"{PYTHON_EXE}" "{IMAGE_CONVERTER_PATH}" "%1" {output_format}'
+                command = f'"{IMAGE_CONVERTER_PATH}" "%1" {output_format}'
                 add_subcommand_entry(main_key_path_image, output_format.upper(), command)
 
         # For directories (when right-clicking on a folder)
@@ -123,7 +164,7 @@ def main():
         main_key_path_directory = add_main_context_menu_entry_with_subcommands(directory_file_type, main_menu_name)
         if main_key_path_directory:
             for output_format in SUPPORTED_OUTPUT_FORMATS:
-                command = f'"{PYTHON_EXE}" "{IMAGE_CONVERTER_PATH}" "%1" {output_format} -r'
+                command = f'"{IMAGE_CONVERTER_PATH}" "%1" {output_format} -r'
                 add_subcommand_entry(main_key_path_directory, output_format.upper(), command)
 
         # For directory background (when right-clicking in an empty space within a folder)
@@ -131,12 +172,12 @@ def main():
         main_key_path_directory_bg = add_main_context_menu_entry_with_subcommands(directory_background_file_type, main_menu_name)
         if main_key_path_directory_bg:
             for output_format in SUPPORTED_OUTPUT_FORMATS:
-                command = f'"{PYTHON_EXE}" "{IMAGE_CONVERTER_PATH}" "%V" {output_format} -r'
+                command = f'"{IMAGE_CONVERTER_PATH}" "%V" {output_format} -r'
                 add_subcommand_entry(main_key_path_directory_bg, output_format.upper(), command)
         
         print("Context menu entries added successfully. You might need to restart Explorer or your computer for changes to take effect.")
 
-    elif args.action == "remove":
+    elif action_to_perform == "remove":
         main_menu_name = "Convert Image(s) To"
 
         # Remove for individual image files
@@ -145,7 +186,11 @@ def main():
         for output_format in SUPPORTED_OUTPUT_FORMATS:
             remove_subcommand_entry(main_key_path_image, output_format.upper())
         try:
-            winreg.DeleteKey(winreg.HKEY_CURRENT_USER, main_key_path_image)
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, main_key_path_image, 0, winreg.KEY_SET_VALUE)
+            winreg.DeleteValue(key, "SubCommands")
+            winreg.CloseKey(key)
+            # Recursively delete the main key
+            delete_key_recursive(winreg.HKEY_CURRENT_USER, main_key_path_image)
             print(f"Removed main '{main_menu_name}' menu for image files.")
         except FileNotFoundError:
             pass
@@ -158,7 +203,10 @@ def main():
         for output_format in SUPPORTED_OUTPUT_FORMATS:
             remove_subcommand_entry(main_key_path_directory, output_format.upper())
         try:
-            winreg.DeleteKey(winreg.HKEY_CURRENT_USER, main_key_path_directory)
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, main_key_path_directory, 0, winreg.KEY_SET_VALUE)
+            winreg.DeleteValue(key, "SubCommands")
+            winreg.CloseKey(key)
+            delete_key_recursive(winreg.HKEY_CURRENT_USER, main_key_path_directory)
             print(f"Removed main '{main_menu_name}' menu for directories.")
         except FileNotFoundError:
             pass
@@ -171,7 +219,11 @@ def main():
         for output_format in SUPPORTED_OUTPUT_FORMATS:
             remove_subcommand_entry(main_key_path_directory_bg, output_format.upper())
         try:
-            winreg.DeleteKey(winreg.HKEY_CURRENT_USER, main_key_path_directory_bg)
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, main_key_path_directory_bg, 0, winreg.KEY_SET_VALUE)
+            winreg.DeleteValue(key, "SubCommands")
+            winreg.CloseKey(key)
+            # Recursively delete the main key
+            delete_key_recursive(winreg.HKEY_CURRENT_USER, main_key_path_directory_bg)
             print(f"Removed main '{main_menu_name}' menu for directory background.")
         except FileNotFoundError:
             pass
